@@ -38,6 +38,7 @@ class SeqClsDataset(Dataset):
             if "intent" in sample.keys():
                 labels.append(self.label_mapping[sample["intent"]])
         text = torch.LongTensor(self.vocab.encode_batch(text, self.max_len))
+        print(labels)
         if len(labels) != 0:
             labels = torch.LongTensor(labels)
         return text, labels, ids
@@ -52,15 +53,18 @@ class SeqClsDataset(Dataset):
 class SeqTaggingClsDataset(SeqClsDataset):
     ignore_idx = -100
 
-    def collate_fn(self, samples):
-        tokens, tags, lens, ids = [], [], [], []
+    def collate_fn(self, samples: List[Dict]) -> Dict:
+        tokens, tags, ids = [], [], []
         for sample in samples:
             tokens.append(sample["tokens"])
-            lens.append(len(sample["tokens"]))
             if "tags" in sample.keys():
-                tags.append(self.label_mapping[sample["tags"]])
+                tag = sample["tags"]
+                for i in range(len(tag)):
+                    tag[i] = self.label_mapping[tag[i]]
+                tags.append(tag)
             ids.append(sample["id"])
         tokens = torch.LongTensor(self.vocab.encode_batch(tokens, self.max_len))
         if len(tags) != 0:
             tags = torch.LongTensor(pad_to_len(tags, self.max_len, 9))
-        return tokens, tags, lens, ids
+            print(tags.size())
+        return tokens, tags, ids

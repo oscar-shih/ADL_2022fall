@@ -55,6 +55,11 @@ class SeqClassifier(torch.nn.Module):
             nn.Dropout(dropout),
             nn.Linear(self.dim, num_class)
         )
+        self.slot_classifier = nn.Sequential(
+            nn.Linear(self.dim, self.dim // 2),
+            nn.LeakyReLU(0.3),
+            nn.Linear(self.dim//2, 9),
+        )
         # self.classifier = nn.Sequential(
         #     nn.BatchNorm1d(self.dim),
         #     nn.LeakyReLU(0.25),
@@ -82,6 +87,17 @@ class SeqClassifier(torch.nn.Module):
 
 # TODO: Try RNN in Slot Tagging
 class SeqTagger(SeqClassifier):
-    def forward(self, batch) -> Dict[str, torch.Tensor]:
+
+    def forward(self, x) -> Dict[str, torch.Tensor]:
         # TODO: implement model forward
-        raise NotImplementedError
+        x = self.embed(x)
+        if self.rnn_type == "lstm":
+            x, _ = self.lstm(x)
+        elif self.rnn_type == "gru":
+            x, _ = self.gru(x)
+        elif self.rnn_type == "rnn":
+            x, _ = self.rnn(x)
+        else: 
+            raise NotImplementedError
+        x = self.slot_classifier(x)
+        return x
