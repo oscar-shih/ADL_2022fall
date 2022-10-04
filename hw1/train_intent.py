@@ -17,7 +17,7 @@ from utils import Vocab, same_seeds, get_cosine_schedule_with_warmup
 
 TRAIN = "train"
 DEV = "eval"
-SPLITS = [TRAIN, DEV]
+SPLITS = [TRAIN, DEV] 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def train(model, data, optimizer):
