@@ -56,9 +56,10 @@ class SeqClassifier(torch.nn.Module):
             nn.Linear(self.dim, num_class)
         )
         self.slot_classifier = nn.Sequential(
+            nn.Dropout(dropout),
             nn.Linear(self.dim, self.dim // 2),
             nn.LeakyReLU(0.3),
-            nn.Linear(self.dim//2, 9),
+            nn.Linear(self.dim//2, num_class),
         )
         # self.classifier = nn.Sequential(
         #     nn.BatchNorm1d(self.dim),

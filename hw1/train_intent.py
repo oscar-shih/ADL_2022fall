@@ -40,7 +40,7 @@ def train(model, data, optimizer):
     train_acc, train_loss = sum(train_acc) / len(train_acc), sum(train_loss) / len(train_loss)
     return train_acc, train_loss
 
-def validate(model, data, optimizer):
+def validate(model, data):
     model.eval()
     dev_acc, dev_loss = [], []
     criterion = nn.CrossEntropyLoss()
@@ -109,7 +109,7 @@ def main(args):
         # TODO: Training loop - iterate over train dataloader and update model weights
         # TODO: Evaluation loop - calculate accuracy and save model weights
         train_acc, train_loss = train(model, train_loader, optimizer)
-        dev_acc, dev_loss = validate(model, dev_loader, optimizer)
+        dev_acc, dev_loss = validate(model, dev_loader)
         wandb.log(
             {'Train Acc': train_acc,
              'Train Loss': train_loss,

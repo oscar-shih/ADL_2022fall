@@ -58,13 +58,9 @@ class SeqTaggingClsDataset(SeqClsDataset):
         for sample in samples:
             tokens.append(sample["tokens"])
             if "tags" in sample.keys():
-                tag = sample["tags"]
-                for i in range(len(tag)):
-                    tag[i] = self.label_mapping[tag[i]]
-                tags.append(tag)
+                tags.append([self.label_mapping[tag] for tag in sample["tags"]])
             ids.append(sample["id"])
         tokens = torch.LongTensor(self.vocab.encode_batch(tokens, self.max_len))
         if len(tags) != 0:
             tags = torch.LongTensor(pad_to_len(tags, self.max_len, 9))
-            print(tags.size())
         return tokens, tags, ids

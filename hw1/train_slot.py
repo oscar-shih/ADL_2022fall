@@ -1,3 +1,4 @@
+import os
 from os.path import join
 import json
 import pickle
@@ -29,21 +30,20 @@ def train(model, data, optimizer):
     for tokens, tags, _ in tqdm(data):
         tokens = tokens.to(device)
         tags = tags.to(device)
-        print(tags.size())
+
         logits = model(tokens)
-        print(logits.size())
-        loss = criterion(logits, tags)
+        loss = criterion(logits.transpose(1, 2), tags)
+        train_loss.append(loss.item())
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        acc = ((logits.argmax(dim=-1) == tags).sum(dim=1)== args.max_len).cpu().int().numpy()
-        train_loss.append(loss.item())
+        acc = ((logits.argmax(dim=-1) == tags).sum(dim=1)== args.max_len).cpu().int().numpy()        
         train_acc.extend(acc)
 
     train_acc, train_loss = sum(train_acc) / len(train_acc), sum(train_loss) / len(train_loss)
-    return train_loss, train_acc
+    return train_acc, train_loss
 
 def validate(model, data):
     model.eval()
@@ -55,13 +55,14 @@ def validate(model, data):
             tokens, tags = tokens.to(device), tags.to(device)
             logits = model(tokens)
 
-            loss = criterion(logits, tags)
+            loss = criterion(logits.transpose(1, 2), tags)
             dev_loss.append(loss.item())
             
-            acc = ((logits.argmax(dim=-1) == tags).sum(dim=1)== args.max_len).cpu().int().numpy()
-            dev_acc.append(acc)
+            acc = ((logits.argmax(dim=-1) == tags).sum(dim=1) == args.max_len).cpu().int().numpy()
+            dev_acc.extend(acc)
 
-    dev_acc, dev_loss = sum(dev_acc) / len(dev_acc), sum(dev_loss) / len(dev_loss)
+    dev_acc = sum(dev_acc) / len(dev_acc)
+    dev_loss = sum(dev_loss) / len(dev_loss)
     return dev_acc, dev_loss
 
 def main(args):
@@ -71,7 +72,7 @@ def main(args):
 
     tag_idx_path = args.cache_dir / "tag2idx.json"
     tag2idx: Dict[str, int] = json.loads(tag_idx_path.read_text())
-    print(tag2idx)
+
     data_paths = {split: args.data_dir / f"{split}.json" for split in SPLITS}
     data = {split: json.loads(path.read_text()) for split, path in data_paths.items()}
     datasets: Dict[str, SeqTaggingClsDataset] = {
@@ -88,7 +89,7 @@ def main(args):
         num_layers=args.num_layers,
         dropout=args.dropout,
         bidirectional=args.bidirectional,
-        num_class=9,
+        num_class=10,
         rnn_type=args.rnn_type
     ).to(device)
     print(model)
@@ -105,7 +106,7 @@ def main(args):
     scheduler = get_cosine_schedule_with_warmup(optimizer, 0, args.num_epoch)
     epoch_pbar = trange(args.num_epoch, desc="Epoch")
     best_acc = -1
-
+    os.makedirs(join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}"), exist_ok=True)
     for epoch in epoch_pbar:
         # TODO: Training loop - iterate over train dataloader and update model weights
         # TODO: Evaluation loop - calculate accuracy and save model weights
