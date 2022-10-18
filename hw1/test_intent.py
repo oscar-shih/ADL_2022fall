@@ -54,16 +54,15 @@ def main(args):
         rnn_type=args.rnn_type
     ).to(device)
     
-    model_path = "intent.pt"
-    ckpt = torch.load(join(args.ckpt_path, f"{args.num_layers}-{args.rnn_type}", model_path))
+    ckpt = torch.load(args.ckpt_path)
     model.load_state_dict(ckpt["model"])
     model.eval()
     # load weights into model
 
     # TODO: predict dataset
     pred, ids = inference(model, test_loader)
-    os.makedirs(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}"), exist_ok=True)
-    with open(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}", args.pred_file), "w") as out:
+    # os.makedirs(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}"), exist_ok=True)
+    with open(args.pred_file, "w") as out:
         out.write("id,intent\n")
         for p, id in zip(pred, ids):
             out.write(id + "," + idx2intent[p] + "\n")
@@ -99,7 +98,7 @@ def parse_args() -> Namespace:
     # model
     parser.add_argument("--hidden_size", type=int, default=512)
     parser.add_argument("--num_layers", type=int, default=2)
-    parser.add_argument("--dropout", type=float, default=0.5)
+    parser.add_argument("--dropout", type=float, default=0.4)
     parser.add_argument("--bidirectional", type=bool, default=True)
     parser.add_argument("--rnn_type", type=str, default="rnn")
     # data loader

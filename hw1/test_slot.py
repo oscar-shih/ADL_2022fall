@@ -52,15 +52,15 @@ def main(args):
         num_class=10,
         rnn_type=args.rnn_type
     ).to(device)
-    model_path = "slot.pt"
-    ckpt = torch.load(join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", model_path))
+
+    ckpt = torch.load(args.ckpt_dir)
     model.load_state_dict(ckpt["model"])
     model.eval()
     pred, ids = inference(model, test_loader)
 
 
-    os.makedirs(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}"), exist_ok=True)
-    with open(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}", args.pred_file), "w") as out:
+    # os.makedirs(join(args.rnn_type, f"{args.num_layers}-{args.rnn_type}"), exist_ok=True)
+    with open(args.pred_file, "w") as out:
         out.write("id,tags\n")
         new_pred = []
         for p, id in zip(pred, ids):

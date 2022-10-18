@@ -123,11 +123,11 @@ def main(args):
             torch.save({"model": model.state_dict(),
                         "optimizer": optimizer.state_dict(),
                         "scheduler": scheduler.state_dict()},
-                        join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "best.ckpt"))
+                        join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "intent.pt"))
     torch.save({"model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
                 "scheduler": scheduler.state_dict()},
-                join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "last.ckpt"))
+                join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "last.pt"))
     # TODO: Inference on test set 
 
 
@@ -158,7 +158,7 @@ def parse_args() -> Namespace:
     # model
     parser.add_argument("--hidden_size", type=int, default=512)
     parser.add_argument("--num_layers", type=int, default=2)
-    parser.add_argument("--dropout", type=float, default=0.5)
+    parser.add_argument("--dropout", type=float, default=0.4)
     parser.add_argument("--bidirectional", type=bool, default=True)
     parser.add_argument("--rnn_type", type=str, default="lstm")
     # optimizer

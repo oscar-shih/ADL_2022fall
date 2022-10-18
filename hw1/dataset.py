@@ -38,7 +38,7 @@ class SeqClsDataset(Dataset):
             if "intent" in sample.keys():
                 labels.append(self.label_mapping[sample["intent"]])
         text = torch.LongTensor(self.vocab.encode_batch(text, self.max_len))
-        print(labels)
+        # print(labels)
         if len(labels) != 0:
             labels = torch.LongTensor(labels)
         return text, labels, ids

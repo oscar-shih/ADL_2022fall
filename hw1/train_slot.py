@@ -125,11 +125,11 @@ def main(args):
             torch.save({"model": model.state_dict(),
                         "optimizer": optimizer.state_dict(),
                         "scheduler": scheduler.state_dict()},
-                        join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "best.ckpt"))
+                        join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "slot.pt"))
     torch.save({"model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
                 "scheduler": scheduler.state_dict()},
-                join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "last.ckpt"))
+                join(args.ckpt_dir, f"{args.num_layers}-{args.rnn_type}", "last.pt"))
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()

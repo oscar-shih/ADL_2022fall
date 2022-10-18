@@ -55,12 +55,12 @@ class SeqClassifier(torch.nn.Module):
             nn.Dropout(dropout),
             nn.Linear(self.dim, num_class)
         )
-        self.slot_classifier = nn.Sequential(
-            nn.Dropout(dropout),
-            nn.Linear(self.dim, self.dim // 2),
-            nn.LeakyReLU(0.3),
-            nn.Linear(self.dim//2, num_class),
-        )
+        # self.slot_classifier = nn.Sequential(
+        #     nn.Dropout(dropout),
+        #     nn.Linear(self.dim, self.dim // 2),
+        #     nn.LeakyReLU(0.3),
+        #     nn.Linear(self.dim//2, num_class),
+        # )
         # self.classifier = nn.Sequential(
         #     nn.BatchNorm1d(self.dim),
         #     nn.LeakyReLU(0.25),
@@ -88,7 +88,59 @@ class SeqClassifier(torch.nn.Module):
 
 # TODO: Try RNN in Slot Tagging
 class SeqTagger(SeqClassifier):
-
+    def __init__(
+        self,
+        embeddings: torch.tensor,
+        hidden_size: int,
+        num_layers: int,
+        dropout: float,
+        bidirectional: bool,
+        num_class: int,
+        rnn_type: str
+    ) -> None:
+        super(SeqClassifier, self).__init__()
+        self.embed = Embedding.from_pretrained(embeddings, freeze=False)
+        # TODO: model architecture
+        self.dim = hidden_size * 2 if bidirectional else hidden_size
+        self.rnn_type = rnn_type
+        self.lstm = nn.LSTM(
+            embeddings.size(1), 
+            hidden_size, 
+            num_layers, 
+            dropout=dropout,
+            batch_first=True,
+            bidirectional=bidirectional
+        )
+        self.gru = nn.GRU(
+            embeddings.size(1),
+            hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+            bidirectional=bidirectional
+        )
+        self.rnn = nn.RNN(
+            embeddings.size(1),
+            hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+            bidirectional=bidirectional
+        )
+        self.classifier = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(self.dim, self.dim),
+            nn.BatchNorm1d(self.dim),
+            nn.LeakyReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(self.dim, num_class)
+        )
+        self.slot_classifier = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(self.dim, self.dim // 2),
+            nn.LeakyReLU(0.3),
+            nn.Linear(self.dim//2, num_class),
+        )
     def forward(self, x) -> Dict[str, torch.Tensor]:
         # TODO: implement model forward
         x = self.embed(x)
