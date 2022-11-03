@@ -1,6 +1,8 @@
 *.txt
 *.in
+*.dat
 cache
 __pycache__
 ckpt
+tokenizer
 wandb
