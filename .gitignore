@@ -1,8 +1,10 @@
 *.txt
 *.in
 *.dat
+*.csv
 cache
 __pycache__
 ckpt
 tokenizer
 wandb
+reproduce
