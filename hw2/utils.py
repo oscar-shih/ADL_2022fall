@@ -12,3 +12,14 @@ def same_seeds(seed):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
+def post_process(ans):
+    if "「" in ans and "」" not in ans:
+        ans += "」"
+    elif "「" not in ans and "」" in ans:
+        ans = "「" + ans
+    if "《" in ans and "》" not in ans:
+        ans += "》"
+    elif "《" not in ans and "》" in ans:
+        ans = "《" + ans
+    ans = ans.replace(",", "")
+    return ans
