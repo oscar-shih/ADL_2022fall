@@ -6,36 +6,29 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-
 class MultipleChoiceDataset(Dataset):
     def __init__(self, args, tokenizer, mode="train"):
         self.mode = mode
-        self.json_data = []
+        self.data = []
         try:
-            self.json_data = torch.load(os.path.join(args.data_dir, f"mc_{mode}.dat"))
+            self.data = torch.load(os.path.join(args.data_dir, f"mc_{mode}.dat"))
         except Exception as e:
-            try:
-                path = args.context_path
-            except:
-                path = os.path.join(args.data_dir, "context.json")
-            with open(path, "r") as f:
+            context_path = os.path.join(args.data_dir, "context.json")
+            with open(context_path, "r") as f:
                 context_data = json.load(f)
-            try:
-                path = args.json_path
-            except:
-                path = os.path.join(args.data_dir, f"{mode}.json")
+            path = os.path.join(args.data_dir, f"{self.mode}.json")
             with open(path, "r") as f:
-                json_data = json.load(f)
-                print(f"Preprocessing {mode} Data:")
-                for data in tqdm(json_data):
+                data = json.load(f)
+                print(f"Preprocess for {self.mode} Data:")
+                for d in tqdm(data):
                     if mode != "test":
-                        label = data["paragraphs"].index(data["relevant"])
+                        label = d["paragraphs"].index(d["relevant"])
                     else:
-                        label = random.choice(list(range(len(data["paragraphs"]))))
+                        label = random.choice(list(range(len(d["paragraphs"]))))
 
                     qa_pair = [
-                        "{} {}".format(data["question"], context_data[i])
-                        for i in data["paragraphs"]
+                        "{} {}".format(d["question"], context_data[i])
+                        for i in d["paragraphs"]
                     ]
                     features = tokenizer(
                         qa_pair,
@@ -44,9 +37,9 @@ class MultipleChoiceDataset(Dataset):
                         return_tensors="pt",
                     )
 
-                    self.json_data.append(
+                    self.data.append(
                         {
-                            "id": data["id"],
+                            "id": d["id"],
                             "input_ids": features["input_ids"],
                             "token_type_ids": features["token_type_ids"],
                             "attention_mask": features["attention_mask"],
@@ -54,13 +47,13 @@ class MultipleChoiceDataset(Dataset):
                         }
                     )
             os.makedirs(args.data_dir, exist_ok=True)
-            torch.save(self.json_data, os.path.join(args.data_dir, f"mc_{mode}.dat"))
+            torch.save(self.data, os.path.join(args.data_dir, f"mc_{mode}.dat"))
 
     def __len__(self):
-        return len(self.json_data)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        return self.json_data[idx]
+        return self.data[idx]
 
     def collate_fn(self, batch):
         ids, input_ids, attention_masks, token_type_ids, labels = [], [], [], [], []
@@ -82,45 +75,39 @@ class QuestionAnsweringDataset(Dataset):
         assert not (mode == "test" and relevant is None)
         self.mode = mode
         self.tokenizer = tokenizer
-        self.json_data = []
-        try:
-            path = args.context_path
-        except:
-            path = os.path.join(args.data_dir, "context.json")
-        with open(path, "r") as f:
+        self.data = []
+        context_path = os.path.join(args.data_dir, "context.json")
+        with open(context_path, "r") as f:
             self.context_data = json.load(f)
-        try:
-            path = args.json_path
-        except:
-            path = os.path.join(args.data_dir, f"{mode}.json")
+        path = os.path.join(args.data_dir, f"{mode}.json")
         with open(path, "r") as f:
-            json_data = json.load(f)
+            data = json.load(f)
             print(f"Preprocessing QA {mode} Data:")
-            for data in tqdm(json_data):
+            for d in tqdm(data):
                 tp = {
-                    "id": data["id"],
-                    "question": data["question"],
+                    "id": d["id"],
+                    "question": d["question"],
                 }
                 if mode != "test":
                     tp.update(
                         {
-                            "context": data["relevant"],
-                            "answer": data["answer"],
+                            "context": d["relevant"],
+                            "answer": d["answer"],
                         }
                     )
                 else:
                     tp.update(
                         {
-                            "context": data["paragraphs"][relevant[data["id"]]],
+                            "context": d["paragraphs"][relevant[d["id"]]],
                         }
                     )
-                self.json_data.append(tp)
+                self.data.append(tp)
 
     def __len__(self):
-        return len(self.json_data)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        return self.json_data[idx]
+        return self.data[idx]
 
     def collate_fn(self, batch):
         ids = [sample["id"] for sample in batch]
@@ -128,7 +115,7 @@ class QuestionAnsweringDataset(Dataset):
             [data["question"] for data in batch],
             [self.context_data[data["context"]] for data in batch],
             truncation="only_second",
-            stride=128,  # TODO: change to 32 for model from scatch
+            stride=32,  
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
             padding="max_length",

@@ -90,7 +90,7 @@ def main(args):
     tokenizer = AutoTokenizer.from_pretrained(
         args.token_path, config=config, model_max_length=args.max_len, use_fast=True
     )
-    model = MultipleChoiceModel(args, config, "hfl/chinese-macbert-base")
+    model = MultipleChoiceModel(args, config)
     model.load_state_dict(torch.load(os.path.join(args.mc_ckpt))["model"])
     test_set = MultipleChoiceDataset(args, tokenizer, mode="test")
     test_loader = DataLoader(
@@ -105,7 +105,7 @@ def main(args):
     del model, test_loader
     torch.cuda.empty_cache()
 
-    model = QuestionAnsweringModel(args, config, "hfl/chinese-macbert-base")
+    model = QuestionAnsweringModel(args, config)
     model.load_state_dict(torch.load(os.path.join(args.qa_ckpt))["model"])
     test_set = QuestionAnsweringDataset(args, tokenizer, mode="test", relevant=relevant)
     test_loader = DataLoader(
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     parser.add_argument("--context_path", type=Path, default="./data/context.json")
     parser.add_argument("--json_path", type=Path, default="./data/test.json")
     # Model checkpoint
+    parser.add_argument("--model_name",type=str, default="hfl/chinese-macbert-base")
     parser.add_argument("--token_path", type=Path, default="./tokenizer")
     parser.add_argument("--mc_ckpt", type=Path, default="./ckpt/mc_2.pt")
     parser.add_argument("--qa_ckpt", type=Path, default="./ckpt/qa_last.pt")
