@@ -5,9 +5,13 @@
 1. Context Selection
 2. Question Answering
 
+## Checkpoint download
+```shell
+bash download.sh
+```
+
 ## Context Selection
 ### Training      
-
 ```shell
 python3 multiple_choice.py
 ```
