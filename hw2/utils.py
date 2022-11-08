@@ -23,3 +23,12 @@ def post_process(ans):
         ans = "《" + ans
     ans = ans.replace(",", "")
     return ans
+
+def get_idx(seq, idx=0):
+    while seq[idx] != 1:
+        idx += 1
+    start = idx
+    while seq[idx] == 1:
+        idx += 1
+    end = idx - 1
+    return start, end

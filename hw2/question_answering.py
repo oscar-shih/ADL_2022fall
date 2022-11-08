@@ -19,11 +19,11 @@ from dataset import QuestionAnsweringDataset
 from model import QuestionAnsweringModel
 from utils import same_seeds
 
-def train(accelerator, data_loader, model, optimizer, scheduler=None):
+def train(data, model, optimizer, scheduler, accelerator):
     model.train()
     train_acc, train_loss = [], []
 
-    for idx, batch in enumerate(tqdm(data_loader)):
+    for idx, batch in enumerate(tqdm(data)):
         _, inputs = batch
         input_ids = inputs["input_ids"]
         token_type_ids = inputs["token_type_ids"]
@@ -50,7 +50,7 @@ def train(accelerator, data_loader, model, optimizer, scheduler=None):
         )
         train_acc.append(acc)
 
-        if ((idx + 1) % 4 == 0) or (idx == len(data_loader) - 1):
+        if ((idx + 1) % 4 == 0) or (idx == len(data) - 1):
             optimizer.step()
             optimizer.zero_grad()
             scheduler.step()
@@ -113,7 +113,6 @@ def get_dataloader_qa(args, tokenizer, mode):
 def main(args):
     same_seeds(args.seed)
     accelerator = Accelerator(fp16=True)
-    # print(f"Using {accelerator.device}")
     wandb_config = {k: v for k, v in vars(args).items()}
     run = wandb.init(
         project=f"ADL Hw2",
@@ -125,13 +124,14 @@ def main(args):
     artifact = wandb.Artifact("model", type="model")
     if args.scratch:
         config = BertConfig(
-            hidden_size=512,
+            hidden_size=768,
             num_hidden_layers=4,
             num_attention_heads=4,
             intermediate_size=512,
-            classifier_dropout=0.4,
-            pooler_fc_size=512,
+            classifier_dropout=0.3,
+            pooler_fc_size=256,
             pooler_num_attention_heads=4,
+            return_dict=False
         )
     else:
         config = AutoConfig.from_pretrained(args.model_name)
@@ -155,7 +155,7 @@ def main(args):
 
     best_acc = 0
     for ep in range(args.num_epoch):
-        train_acc, train_loss = train(accelerator, train_loader, model, optimizer, scheduler)
+        train_acc, train_loss = train(train_loader, model, optimizer, scheduler, accelerator)
         valid_acc, valid_loss = validate(valid_loader, model)
 
         wandb.log(
@@ -173,14 +173,14 @@ def main(args):
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 },
-                os.path.join(args.ckpt_dir, f"best_qa.pt"),
+                os.path.join(args.ckpt_dir, f"{args.model_name}_best_qa.pt"),
             )
     torch.save(
         {
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
         },
-        os.path.join(args.ckpt_dir, "qa_last.pt"),
+        os.path.join(args.ckpt_dir, f"{args.model_name}_qa_last.pt"),
     )
 
 if __name__ == "__main__":
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
     # data loader
     parser.add_argument("--batch_size", type=int, default=2)
-    parser.add_argument("--num_epoch", type=int, default=10)
+    parser.add_argument("--num_epoch", type=int, default=6)
 
     # training
     parser.add_argument(

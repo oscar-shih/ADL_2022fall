@@ -18,7 +18,7 @@ def train(data, model, optimizer, scheduler, accelerator):
     train_acc, train_loss = [], []
 
     for i, batch in enumerate(tqdm(data)):
-        _, input_ids, attention_masks, token_type_ids, labels = batch
+        input_ids, attention_masks, token_type_ids, labels = batch
         loss, logits = model(
             input_ids=input_ids,
             attention_mask=attention_masks,
@@ -46,7 +46,7 @@ def validate(data, model):
     
     with torch.no_grad():
         for batch in tqdm(data):
-            _, input_ids, attention_masks, token_type_ids, labels = batch
+            input_ids, attention_masks, token_type_ids, labels = batch
             loss, logits = model(
                 input_ids=input_ids,
                 attention_mask=attention_masks,
@@ -66,11 +66,11 @@ def main(args):
     accelerator = Accelerator(fp16=True)
     if args.scratch: # For experiment in report
         config = BertConfig(
-            hidden_size=512,
+            hidden_size=768,
             num_hidden_layers=4,
             num_attention_heads=4,
             intermediate_size=512,
-            classifier_dropout=0.4,
+            classifier_dropout=0.3,
             pooler_fc_size=256,
             pooler_num_attention_heads=4,
             return_dict=False
@@ -129,8 +129,8 @@ def main(args):
             {
                 "Train Accuracy": train_acc,
                 "Train Loss": train_loss,
-                "Dev Accuracy": valid_acc,
-                "Dev Loss": valid_loss
+                "Valid Accuracy": valid_acc,
+                "Valid Loss": valid_loss
             }
         )
         if valid_acc > best_acc:
@@ -140,14 +140,14 @@ def main(args):
                  "model": model.state_dict(),
                  "optimizer": optimizer.state_dict(),
                 },
-                os.path.join(args.ckpt_dir, f"mc_best.pt"),
+                os.path.join(args.ckpt_dir, f"{args.model_name}_mc_best.pt"),
             )
     torch.save(
         {
          "model": model.state_dict(),
          "optimizer": optimizer.state_dict(),
         },
-        os.path.join(args.ckpt_dir, "mc_last.pt"),
+        os.path.join(args.ckpt_dir, f"{args.model_name}_mc_last.pt"),
     )
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -173,8 +173,8 @@ if __name__ == "__main__":
     parser.add_argument("--wd", type=float, default=1e-5)
 
     # data loader
-    parser.add_argument("--batch_size", type=int, default=2)
-    parser.add_argument("--num_epoch", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=1)
+    parser.add_argument("--num_epoch", type=int, default=6)
 
     # training settings
     parser.add_argument(
