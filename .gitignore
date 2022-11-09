@@ -8,3 +8,5 @@ ckpt
 tokenizer
 wandb
 reproduce
+tw_rouge
+data
