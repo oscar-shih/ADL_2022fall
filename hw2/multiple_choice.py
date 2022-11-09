@@ -77,6 +77,7 @@ def main(args):
         )
     else:
         config = AutoConfig.from_pretrained(args.model_name, return_dict=False)
+    # print(config)
     wandb_config = {k: v for k, v in vars(args).items()}
     run = wandb.init(
         project=f"ADL Hw2",

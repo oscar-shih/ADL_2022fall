@@ -21,7 +21,8 @@ def post_process(ans):
         ans += "」"
     elif "「" not in ans and "」" in ans:
         ans = "「" + ans
-    ans = ans.replace(",", "")
+    if "," in ans:
+        ans = '"' + ans + '"'
     return ans
 
 def get_idx(seq, idx=0):

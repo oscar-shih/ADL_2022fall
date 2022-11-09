@@ -26,7 +26,6 @@ class MultipleChoiceDataset(Dataset):
                         tokenizer=tokenizer,
                         mode=self.mode
                     )
-
                     self.data.append(
                         {
                             "id": ids,
@@ -36,7 +35,6 @@ class MultipleChoiceDataset(Dataset):
                             "label": label,
                         }
                     )
-            torch.save(self.data, os.path.join(args.data_dir, f"mc_{mode}.dat"))
 
     def __len__(self):
         return len(self.data)
@@ -137,7 +135,7 @@ class QuestionAnsweringDataset(Dataset):
                 seq_id = inputs.sequence_ids(id)
                 offset = inputs["offset_mapping"][id]
                 offset_mapping.append(
-                    [v if seq_id[k] == 1 else None for k, v in enumerate(offset)]
+                    [v if seq_id[k] else None for k, v in enumerate(offset)]
                 )
 
             inputs["example_id"] = example_ids
