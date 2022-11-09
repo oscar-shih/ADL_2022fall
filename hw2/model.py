@@ -9,7 +9,7 @@ class MultipleChoiceModel(nn.Module):
         if args.scratch: # For experiment in report
             self.model = AutoModelForMultipleChoice.from_config(config)
         else:
-            self.model = AutoModelForMultipleChoice.from_pretrained(self.name, config = config)
+            self.model = AutoModelForMultipleChoice.from_pretrained(self.name, config=config)
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
