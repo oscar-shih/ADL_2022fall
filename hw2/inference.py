@@ -13,42 +13,42 @@ from utils import post_process, same_seeds
 from predict import *
 
 def inference(args):
+    mode = "test"
     accelerator = Accelerator(fp16=args.fp16)
     config = AutoConfig.from_pretrained(args.token_path)
-    model = MultipleChoiceModel(args, config)
-    model.load_state_dict(torch.load(os.path.join(args.mc_ckpt))["model"])
+
     tokenizer = AutoTokenizer.from_pretrained(
         args.token_path,
-        config=config, 
         model_max_length=args.max_len, 
+        config=config, 
         use_fast=True
     )
     test_set = MultipleChoiceDataset(
         args, 
         tokenizer, 
-        mode="test"
+        mode=mode
     )
     test_loader = DataLoader(
         test_set,
-        collate_fn=test_set.collate_fn,
         shuffle=False,
         batch_size=1,
+        collate_fn=test_set.collate_fn,
         pin_memory=True,
         num_workers=0
     )
+    model = MultipleChoiceModel(args, config)
+    model.load_state_dict(torch.load(os.path.join(args.mc_ckpt))["model"])
     model, test_loader = accelerator.prepare(model, test_loader)
-    relevant = mc_predict(test_loader, model)
+    rel = mc_predict(model, test_loader, mode)
 
     del model, test_loader
     torch.cuda.empty_cache()
 
-    model = QuestionAnsweringModel(args, config)
-    model.load_state_dict(torch.load(os.path.join(args.qa_ckpt))["model"])
     test_set = QuestionAnsweringDataset(
         args, 
         tokenizer, 
-        mode="test", 
-        relevant=relevant
+        mode=mode, 
+        relevant=rel
     )
     test_loader = DataLoader(
         test_set,
@@ -58,14 +58,17 @@ def inference(args):
         pin_memory=True,
         num_workers=0
     )
+
+    model = QuestionAnsweringModel(args, config)
+    model.load_state_dict(torch.load(os.path.join(args.qa_ckpt))["model"])
     model, test_loader = accelerator.prepare(model, test_loader)
 
-    answers = qa_predict(test_loader, model)
+    answers = qa_predict(model, test_loader, mode)
     with open(args.csv_path, "w") as f:
         print("id,answer", file=f)
-        for _id, answer in answers:
+        for id, answer in answers:
             answer = post_process(answer)
-            print(f"{_id},{answer}", file=f)
+            print(f"{id},{answer}", file=f)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -81,12 +84,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("--context_path", type=Path, default="./data/context.json")
     parser.add_argument("--json_path", type=Path, default="./data/test.json")
+    parser.add_argument("--csv_path", type=str, default="./hw2.csv")
     # Model checkpoint
     parser.add_argument("--model_name",type=str, default="hfl/chinese-macbert-base")
     parser.add_argument("--token_path", type=Path, default="./tokenizer")
     parser.add_argument("--mc_ckpt", type=Path, default="./reproduce/mc_2.pt")
     parser.add_argument("--qa_ckpt", type=Path, default="./reproduce/qa_last.pt")
-    parser.add_argument("--csv_path", type=str, default="hw2.csv")
+
     # Others
     parser.add_argument("--max_len", type=int, default=512)
     parser.add_argument("--scratch", type=bool, default=False)

@@ -1,13 +1,13 @@
 import torch
 import random
-from tqdm import tqdm
+import numpy as np
 
 def mc_preprocess(context, data, tokenizer, mode):
     ids = data["id"]
     lbl = data["paragraphs"].index(data["relevant"]) if mode != "test" else random.choice(list(range(len(data["paragraphs"]))))
     pair = [
         "{} {}".format(data["question"], context[i]) for i in data["paragraphs"]
-    ] # May Change to [SEP]
+    ] # May Change "{} {}" to "{} [SEP] {}"
     feature = tokenizer(
         pair,
         padding="max_length",

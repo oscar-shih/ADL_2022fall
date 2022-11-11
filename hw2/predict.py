@@ -3,8 +3,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-def mc_predict(data, model):
-    model.eval()
+def mc_predict(model, data, mode):
+    if mode == 'test':
+        model.eval()
     relevant = dict()
     with torch.no_grad():
         for batch in tqdm(data):
@@ -20,8 +21,9 @@ def mc_predict(data, model):
 
     return relevant
 
-def qa_predict(data, model): 
-    model.eval()
+def qa_predict(model, data, mode): 
+    if mode == 'test':
+        model.eval()
     ans = []
     with torch.no_grad():
         for batch in tqdm(data):
@@ -41,8 +43,7 @@ def qa_predict(data, model):
             start_logits = qa_output.start_logits.cpu().numpy()
             end_logits = qa_output.end_logits.cpu().numpy()
             for i in range(len(input_ids)):
-                start_logit = start_logits[i]
-                end_logit = end_logits[i]
+                start_logit, end_logit = start_logits[i], end_logits[i]
                 offsets = inputs["offset_mapping"][i]
 
                 start_indexes = np.argsort(start_logit)[-1:-21:-1].tolist()
