@@ -43,10 +43,11 @@ def train(data, model, optimizer, scheduler, accelerator):
         accelerator.backward(loss)
         train_loss.append(loss.item())
 
-        start_logits = qa_output.start_logits.argmax(dim=-1)
-        end_logits = qa_output.end_logits.argmax(dim=-1)
         acc = (
-            ((start_positions == start_logits) & (end_positions == end_logits)).cpu().numpy().mean()
+            (
+                (qa_output.start_logits.argmax(dim=-1) == start_positions) 
+                & (qa_output.end_logits.argmax(dim=-1) == end_positions)
+            ).cpu().numpy().mean()
         )
         train_acc.append(acc)
 
@@ -77,13 +78,12 @@ def validate(data_loader, model):
                 start_positions=start_positions,
                 end_positions=end_positions
             )
-            loss = qa_output.loss
-            valid_loss.append(loss.item())
-
-            start_logits = qa_output.start_logits.argmax(dim=-1)
-            end_logits = qa_output.end_logits.argmax(dim=-1)
+            valid_loss.append(qa_output.loss.item())
             acc = (
-                ((start_positions == start_logits) & (end_positions == end_logits)).cpu().numpy().mean()
+                (
+                    (qa_output.start_logits.argmax(dim=-1) == start_positions) 
+                    & (qa_output.end_logits.argmax(dim=-1) == end_positions)
+                ).cpu().numpy().mean()
             )
             valid_acc.append(acc)
 
