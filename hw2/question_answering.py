@@ -15,7 +15,7 @@ from transformers import (
     BertConfig,
     get_cosine_schedule_with_warmup,
 )
-from dataset import QuestionAnsweringDataset
+from dataset import QuestionAnsweringDataset, get_dataloader_qa
 from model import QuestionAnsweringModel
 from utils import same_seeds
 
@@ -90,25 +90,7 @@ def validate(data_loader, model):
         valid_acc, valid_loss = sum(valid_acc) / len(valid_acc), sum(valid_loss) / len(valid_loss)
     return valid_acc, valid_loss
 
-def get_dataloader_qa(args, tokenizer, mode):
-    if mode == "valid":
-        dataset = QuestionAnsweringDataset(args, tokenizer, mode)
-        dataloader = DataLoader(
-            dataset,
-            collate_fn=dataset.collate_fn,
-            shuffle=False,
-            batch_size=args.batch_size,
-        )
-    else:
-        dataset = QuestionAnsweringDataset(args, tokenizer)
-        dataloader = DataLoader(
-            dataset,
-            collate_fn=dataset.collate_fn,
-            shuffle=True,
-            batch_size=args.batch_size,
-        )
 
-    return dataloader
 
 def main(args):
     same_seeds(args.seed)

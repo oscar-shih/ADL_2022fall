@@ -1,7 +1,7 @@
 import os
 import json
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from utils import get_idx
 from preprocess import mc_preprocess, qa_preprocess
@@ -141,3 +141,24 @@ class QuestionAnsweringDataset(Dataset):
             inputs["example_id"] = example_ids
             inputs["offset_mapping"] = offset_mapping
         return ids, inputs
+
+
+def get_dataloader_qa(args, tokenizer, mode):
+    if mode == "valid":
+        dataset = QuestionAnsweringDataset(args, tokenizer, mode)
+        dataloader = DataLoader(
+            dataset,
+            collate_fn=dataset.collate_fn,
+            shuffle=False,
+            batch_size=args.batch_size,
+        )
+    else:
+        dataset = QuestionAnsweringDataset(args, tokenizer)
+        dataloader = DataLoader(
+            dataset,
+            collate_fn=dataset.collate_fn,
+            shuffle=True,
+            batch_size=args.batch_size,
+        )
+
+    return dataloader
