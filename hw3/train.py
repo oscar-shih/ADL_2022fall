@@ -1,16 +1,16 @@
 import os
 from argparse import ArgumentParser
 from pathlib import Path
-from sympy import Predicate
-
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
-
+print(torch.cuda.is_available())
 import numpy as np
 from tqdm import tqdm
 from transformers import (
     AutoConfig,
+    MT5Tokenizer,
+    MT5ForConditionalGeneration,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     get_cosine_schedule_with_warmup,
@@ -19,11 +19,13 @@ from transformers import (
 from accelerate import Accelerator
 import wandb
 
-from twrouge import get_rouge
+from tw_rouge import get_rouge
 from utils import *
 from dataset import SummarizationDataset
 from post_process import postprocess
-
+print(torch.cuda.is_available())
+device = "cuda" if torch.cuda.is_available() else 'cpu'
+print(device)
 def train(args, model, data, accelerator, tokenizer, optimizer, scheduler):
     train_loss = []
     model.train()
@@ -35,7 +37,7 @@ def train(args, model, data, accelerator, tokenizer, optimizer, scheduler):
             truncation=True,
             max_length=args.max_src_len,
             return_tensors="pt",
-        ).to(args.device)
+        ).to(device)
         label_input_ids = tokenizer(
             label,
             padding="max_length",
@@ -47,7 +49,7 @@ def train(args, model, data, accelerator, tokenizer, optimizer, scheduler):
         label_input_ids["input_ids"] = [
             [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in label_input_ids["input_ids"]
         ]
-        input_ids["labels"] = torch.LongTensor(label_input_ids["input_ids"]).to(args.device)
+        input_ids["labels"] = torch.LongTensor(label_input_ids["input_ids"]).to(device)
 
         outputs = model(**input_ids)
         loss = outputs.loss
@@ -73,7 +75,7 @@ def validate(args, model, tokenizer, data):
                 truncation=True,
                 max_length=args.max_src_len,
                 return_tensors="pt"
-            ).to(args.device)
+            ).to(device)
             label_input_ids = tokenizer(
                 label,
                 padding="max_length",
@@ -84,7 +86,7 @@ def validate(args, model, tokenizer, data):
             label_input_ids["input_ids"] = [
                 [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in label_input_ids["input_ids"]
             ]
-            input_ids["labels"] = torch.LongTensor(label_input_ids["input_ids"]).to(args.device)
+            input_ids["labels"] = torch.LongTensor(label_input_ids["input_ids"]).to(device)
             output = model.generate(**input_ids)
             loss = output.loss
             loss /= args.accu_step
@@ -101,16 +103,24 @@ def validate(args, model, tokenizer, data):
     return valid_loss, rouge_score
 
 def main(args):
+
     same_seeds(args.seed)
-    accelerator = Accelerator(fp16=args.fp16)
+    accelerator = Accelerator(fp16=True)
     config = AutoConfig.from_pretrained(args.model_name)
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.model_name, 
-        use_fast=True, 
-        do_lower_case=True
+    tokenizer = MT5Tokenizer.from_pretrained(
+        args.model_name,
+        config=config,
+        use_fast=True,
+        model_max_length=512
     )
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name, config=config)
-    model.to(args.device)
+    # model = MT5Model.from_pretrained(
+    #     join(args.local_model_root, args.model)
+    # )
+    model = MT5ForConditionalGeneration.from_pretrained(
+        args.model_name,
+    )
+    model.to(device)
+
     train_set = SummarizationDataset(args, "train.jsonl", mode="train")
     valid_set = SummarizationDataset(args, "public.jsonl", mode="valid")
     train_loader = DataLoader(
@@ -187,7 +197,9 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--seed", type=int, default=1126)
     parser.add_argument("--fp16", type=bool, default=True)
-    parser.add_argument("--device", type=torch.device, default="cuda")
+    parser.add_argument(
+        "--device", type=torch.device, help="cpu, cuda, cuda:0, cuda:1", default="cuda"
+    )
     parser.add_argument(
         "--data_dir",
         type=Path,
@@ -206,12 +218,12 @@ if __name__ == "__main__":
     parser.add_argument("--wd", type=float, default=1e-2)
 
     # data loader
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=1)
 
     # training
     parser.add_argument("--num_epoch", type=int, default=10)
     parser.add_argument("--accu_step", type=int, default=8)
-    parser.add_argument("--max_scr_len", type=int, default=512)
+    parser.add_argument("--max_src_len", type=int, default=512)
     parser.add_argument("--max_tgt_len", type=int, default=128)
     parser.add_argument("--scratch", action="store_true")
     args = parser.parse_args()
