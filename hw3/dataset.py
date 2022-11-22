@@ -25,8 +25,8 @@ class SummarizationDataset(Dataset):
                     line = json.loads(line) # dict_keys(['date_publish', 'source_domain', 'maintext', 'split', 'id'])
                     self.id.append(line['id'])
                     self.data[line['id']] = line['maintext'].strip()
-        with open(f"./data/{mode}.json", "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=4, ensure_ascii=False)            
+        # with open(f"./data/{mode}.json", "w", encoding="utf-8") as f:
+        #     json.dump(self.data, f, indent=4, ensure_ascii=False)            
 
     def __getitem__(self, index):
         if self.mode == "test":

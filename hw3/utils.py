@@ -12,3 +12,8 @@ def same_seeds(seed):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
+def record_rouge_score(score, record):
+    for key in score.keys():
+        for idx in score[key].keys():
+            record[key][idx].append(score[key][idx])
+    return record
