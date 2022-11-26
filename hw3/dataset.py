@@ -6,13 +6,17 @@ import json
 import pandas
 
 class SummarizationDataset(Dataset):
-    def __init__(self, args, file, mode):
+    def __init__(self, args, file=None, mode="train"):
         super(SummarizationDataset, self).__init__()
         self.id = []
         self.data = {}
         self.label = {}
         self.mode = mode
-        with open(os.path.join(args.data_dir, file)) as f:
+        if file is not None:
+            file_path = args.file_path + file
+        else:
+            file_path = args.file_path
+        with open(file_path) as f:
             if self.mode != "test":
                 for line in f:
                     line = json.loads(line)

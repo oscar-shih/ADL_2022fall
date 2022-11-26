@@ -6,28 +6,31 @@ from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 import os
 from tqdm import tqdm
-from transformers import MT5Tokenizer, MT5ForConditionalGeneration, AutoConfig
+from transformers import MT5Tokenizer, AutoConfig
 from accelerate import Accelerator
 from pathlib import Path
 from utils import same_seeds
 from dataset import SummarizationDataset
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 def main(args):
     same_seeds(args.seed)
-    test_set = SummarizationDataset(args, "public.jsonl", "test")
+    test_set = SummarizationDataset(args, mode="test")
     test_loader = DataLoader(
         test_set, 
         batch_size=args.batch_size,
-        shuffle=False,
+        shuffle=False
     )
+    config = AutoConfig.from_pretrained(args.token_path)
     tokenizer = MT5Tokenizer.from_pretrained(
-        args.model_name,
+        args.token_path,
+        config=config,
         use_fast=True
     )
     accelerator = Accelerator()
     # print(os.path.join(args.ckpt_dir, "best.pt"))
-    model = MT5ForConditionalGeneration.from_pretrained(args.model_name)
-    model.load_state_dict(torch.load(os.path.join(args.ckpt_dir, "best.pt")))
+    # model = AutoModel.from_config(config=config)
+    model = torch.load("./best.pt")
     model, test_loader = accelerator.prepare(model, test_loader)
 
     model.eval()
@@ -64,16 +67,22 @@ if __name__ == "__main__":
         "--device", type=torch.device, help="cpu, cuda, cuda:0, cuda:1", default="cuda"
     )
     parser.add_argument(
-        "--data_dir",
+        "--file_path",
         type=Path,
         help="Directory to the dataset.",
-        default="./data",
+        default="./data/public.jsonl",
     )
     parser.add_argument(
         "--ckpt_dir",
         type=Path,
         help="Directory to save the model file.",
         default="./ckpt",
+    )
+    parser.add_argument(
+        "--token_path",
+        type=Path,
+        help="Directory to save the tokenizer file.",
+        default="./tokenizer",
     )
     parser.add_argument("--model_name", type=str, default="google/mt5-small")
 

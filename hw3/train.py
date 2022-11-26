@@ -192,12 +192,11 @@ def main(args):
         if mean_score > best_score:
             best_score = mean_score
             torch.save(
-                model.state_dict(), 
+                model, 
                 os.path.join(args.ckpt_dir, "best.pt")
             )
-    tokenizer.save_pretrained(args.ckpt_dir)
     torch.save(
-        model.state_dict(),
+        model,
         os.path.join(args.ckpt_dir, "last.pt")
     )
 
@@ -209,7 +208,7 @@ if __name__ == "__main__":
         "--device", type=torch.device, help="cpu, cuda, cuda:0, cuda:1", default="cuda"
     )
     parser.add_argument(
-        "--data_dir",
+        "--file_path",
         type=Path,
         help="Directory to the dataset.",
         default="./data",
