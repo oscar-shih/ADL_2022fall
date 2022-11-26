@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     # Others
     parser.add_argument("--max_len", type=int, default=512)
-    parser.add_argument("--scratch", type=bool, default=False)
+    parser.add_argument("--scratch", type=bool, default=True)
     args = parser.parse_args()
     same_seeds(args.seed)
     inference(args)
