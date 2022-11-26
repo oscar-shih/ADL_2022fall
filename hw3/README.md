@@ -10,7 +10,25 @@ git clone https://github.com/moooooser999/ADL22-HW3.git
 cd ADL22-HW3
 pip install -e tw_rouge
 ```
+## Train
+```
+python3 train.py
+```
 
+## Download model
+```
+bash download.sh
+```
+
+## Inference
+```
+python3 submission.py --file-path <input_path> --output_path <output_path>
+```
+
+## Evaluation
+```
+python3 eval.py -r <reference_file> -s <submission_file>
+```
 
 ## Usage
 ### Use the Script
