@@ -2,6 +2,7 @@
 *.in
 *.dat
 *.csv
+*.json
 cache
 __pycache__
 ckpt
