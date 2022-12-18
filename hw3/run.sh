@@ -1,1 +1,1 @@
-python submission.py --file_path $1 --output_path $2
+python submission.py --file_path ${1} --output_path ${2}

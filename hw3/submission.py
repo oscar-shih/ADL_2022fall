@@ -44,7 +44,14 @@ def main(args):
                     max_length=args.max_src_len,
                     return_tensors="pt"
                 ).to(device)
-                output = model.generate(**input_ids, do_sample=False, num_beams=10)
+                output = model.generate(
+                    **input_ids, 
+                    do_sample=args.greedy, 
+                    num_beams=args.beams, 
+                    # top_k=args.top_k, 
+                    # top_p=args.top_p, 
+                    # temperature=args.temperature
+                )
                 preds = tokenizer.batch_decode(
                     output,
                     skip_special_tokens=True
@@ -93,6 +100,12 @@ if __name__ == "__main__":
     parser.add_argument("--max_src_len", type=int, default=256)
     parser.add_argument("--max_tgt_len", type=int, default=64)
     parser.add_argument("--output_path", type=str, default="./submission.json")
+    # experiment
+    parser.add_argument("--greedy", type=bool, default=False)
+    parser.add_argument("--beams", type=int, default=10)
+    parser.add_argument("--top_k", type=int, default=200)
+    parser.add_argument("--top_p", type=float, default=1.0)
+    parser.add_argument("--temperature", type=float, default=1.0)
     args = parser.parse_args()
     main(args)
      
