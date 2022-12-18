@@ -3,6 +3,7 @@
 *.dat
 *.csv
 *.json
+*.jsonl
 *.pt
 cache
 __pycache__

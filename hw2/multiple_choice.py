@@ -174,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument("--wd", type=float, default=1e-5)
 
     # data loader
-    parser.add_argument("--batch_size", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--num_epoch", type=int, default=6)
 
     # training settings
