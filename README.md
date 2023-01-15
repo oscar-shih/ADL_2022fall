@@ -10,7 +10,7 @@
 * Hw3 -- mT5 Chinese News Summarization
   * mT5-small
   * Tw-rouge
-  * Score: TBD
+  * Score: 20/22
 
 ## Final Project -- CrossFit Classification Tasks with Parameter-Efficient Fine-Tuning
 * CrossFit
